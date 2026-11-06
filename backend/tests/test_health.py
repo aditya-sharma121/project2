@@ -25,8 +25,8 @@ def test_error_response_format_404():
 
 
 def test_api_v1_subroutes_exist():
-    # Test auth
-    assert client.get("/api/v1/auth/me").status_code == 200
+    # Test auth (returns 401 unauthorized without token, confirming auth guard works)
+    assert client.get("/api/v1/auth/me").status_code == 401
     # Test incidents
     assert client.get("/api/v1/incidents").status_code == 200
     # Test evidence

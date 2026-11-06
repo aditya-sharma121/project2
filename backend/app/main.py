@@ -1,4 +1,5 @@
 import time
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, status, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -8,13 +9,24 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from app.config import settings
 from app.api import api_router
 from app.websocket.manager import ws_manager
+from app.database.init_db import init_db
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup actions
+    init_db()
+    yield
+    # Shutdown actions
+
 
 app = FastAPI(
     title="AFTERFLOW API",
     description="AI-powered urban flood intelligence and hazard-aware route optimization",
     version="1.0.0",
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
+    lifespan=lifespan
 )
 
 # CORS Middleware
@@ -96,7 +108,6 @@ async def websocket_incidents_endpoint(websocket: WebSocket):
     await ws_manager.connect(websocket)
     try:
         while True:
-            # Keepalive listener / echo
             data = await websocket.receive_text()
             if data == "ping":
                 await websocket.send_text('{"event":"pong"}')
